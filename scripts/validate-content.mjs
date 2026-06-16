@@ -23,8 +23,10 @@ ajv.addFormat("uri", {
 });
 
 const articleSchema = await readJson(path.join(rootDir, "schemas", "article.schema.json"));
+const agentSchema = await readJson(path.join(rootDir, "schemas", "agent.schema.json"));
 const artifactSchema = await readJson(path.join(rootDir, "schemas", "artifact.schema.json"));
 const validateArticle = ajv.compile(articleSchema);
+const validateAgent = ajv.compile(agentSchema);
 const validateArtifact = ajv.compile(artifactSchema);
 const errors = [];
 
@@ -56,7 +58,34 @@ function claimMarkers(articleBody) {
   return markers;
 }
 
+function reportDuplicates(prefix, label, values) {
+  const seen = new Set();
+  for (const value of values) {
+    if (seen.has(value)) {
+      report(`${prefix}: duplicate ${label} ${value}.`);
+    }
+    seen.add(value);
+  }
+}
+
 const articles = await loadArticles();
+const publishedArticles = articles.filter((article) =>
+  article.articleFrontmatter.status === "published" && article.artifact.status === "published"
+);
+const knownIds = new Set();
+
+for (const article of articles) {
+  knownIds.add(article.artifact.id);
+  for (const topic of article.artifact.topics) {
+    knownIds.add(`topic:${topic}`);
+  }
+  for (const claim of article.artifact.claims) {
+    knownIds.add(claim.id);
+  }
+  for (const source of article.artifact.sources) {
+    knownIds.add(source.id);
+  }
+}
 
 if (articles.length === 0) {
   report("No articles found under content/articles/<yyyy>/<slug>.");
@@ -73,6 +102,10 @@ for (const article of articles) {
 
   if (!validateArtifact(article.artifact)) {
     formatAjvErrors(`${prefix} artifact`, validateArtifact);
+  }
+
+  if (!validateAgent(article.agentFrontmatter)) {
+    formatAjvErrors(`${prefix} agent frontmatter`, validateAgent);
   }
 
   if (article.articleFrontmatter.slug !== article.slug) {
@@ -95,6 +128,22 @@ for (const article of articles) {
     report(`${prefix}: artifact id does not match article id.`);
   }
 
+  if (article.agentFrontmatter.articleId !== article.articleFrontmatter.id) {
+    report(`${prefix}: agent articleId does not match article id.`);
+  }
+
+  if (article.agentFrontmatter.slug !== article.slug) {
+    report(`${prefix}: agent slug does not match folder slug.`);
+  }
+
+  if (article.agentFrontmatter.status !== article.articleFrontmatter.status) {
+    report(`${prefix}: agent status does not match article status.`);
+  }
+
+  if (article.artifact.status !== article.articleFrontmatter.status) {
+    report(`${prefix}: artifact status does not match article status.`);
+  }
+
   if (article.artifact.sourcePath !== expectedSource) {
     report(`${prefix}: artifact sourcePath must be ${expectedSource}.`);
   }
@@ -108,6 +157,11 @@ for (const article of articles) {
   }
 
   const markers = claimMarkers(article.articleBody);
+  const claimIds = article.artifact.claims.map((claim) => claim.id);
+  const sourceIdsList = article.artifact.sources.map((source) => source.id);
+  reportDuplicates(prefix, "claim id", claimIds);
+  reportDuplicates(prefix, "source id", sourceIdsList);
+
   const artifactClaims = new Set(article.artifact.claims.map((claim) => claim.id));
 
   for (const claimId of artifactClaims) {
@@ -131,14 +185,22 @@ for (const article of articles) {
     }
   }
 
+  for (const relation of article.artifact.related) {
+    if (!knownIds.has(relation.id)) {
+      report(`${prefix}: related ${relation.id} is not present in article, topic, claim, or source IDs.`);
+    }
+  }
+
   const tokenBudget = Number(article.agentFrontmatter.tokenBudget ?? 0);
   const estimatedTokens = Math.ceil(article.agentBody.trim().split(/\s+/).length * 1.35);
   if (tokenBudget > 0 && estimatedTokens > tokenBudget) {
     report(`${prefix}: agent.md estimate ${estimatedTokens} tokens exceeds budget ${tokenBudget}.`);
   }
 
-  await assertExists(path.join(publicRoot, "agents", "articles", `${article.slug}.json`));
-  await assertExists(path.join(publicRoot, "agents", "articles", `${article.slug}.md`));
+  if (article.articleFrontmatter.status === "published" && article.artifact.status === "published") {
+    await assertExists(path.join(publicRoot, "agents", "articles", `${article.slug}.json`));
+    await assertExists(path.join(publicRoot, "agents", "articles", `${article.slug}.md`));
+  }
 }
 
 await assertExists(path.join(publicRoot, "agents", "index.json"));
@@ -149,20 +211,65 @@ await assertExists(path.join(publicRoot, "llms.txt"));
 
 try {
   const index = await readJson(path.join(publicRoot, "agents", "index.json"));
-  if (index.articles?.length !== articles.length) {
-    report(`Agent index has ${index.articles?.length ?? 0} article(s); expected ${articles.length}.`);
+  if (index.articles?.length !== publishedArticles.length) {
+    report(`Agent index has ${index.articles?.length ?? 0} article(s); expected ${publishedArticles.length}.`);
+  }
+
+  for (const entry of index.articles ?? []) {
+    if (entry.status !== "published") {
+      report(`Agent index includes non-published article ${entry.slug}.`);
+    }
   }
 
   const jsonl = await readFile(path.join(publicRoot, "agents", "index.jsonl"), "utf8");
   const lines = jsonl.trim().split("\n").filter(Boolean);
-  if (lines.length !== articles.length) {
-    report(`Agent JSONL has ${lines.length} line(s); expected ${articles.length}.`);
+  if (lines.length !== publishedArticles.length) {
+    report(`Agent JSONL has ${lines.length} line(s); expected ${publishedArticles.length}.`);
   }
   for (const line of lines) {
     JSON.parse(line);
   }
 } catch (error) {
   report(`Generated agent index is invalid: ${error.message}`);
+}
+
+try {
+  const nodes = await readJson(path.join(publicRoot, "graph", "nodes.json"));
+  const edges = await readJson(path.join(publicRoot, "graph", "edges.json"));
+  const nodeIds = new Set(nodes.map((node) => node.id));
+  reportDuplicates("graph", "node id", nodes.map((node) => node.id));
+  reportDuplicates("graph", "edge", edges.map((edge) => `${edge.from}:${edge.type}:${edge.to}`));
+
+  for (const edge of edges) {
+    if (!nodeIds.has(edge.from)) {
+      report(`graph: edge ${edge.from}:${edge.type}:${edge.to} has missing from node.`);
+    }
+    if (!nodeIds.has(edge.to)) {
+      report(`graph: edge ${edge.from}:${edge.type}:${edge.to} has missing to node.`);
+    }
+  }
+
+  for (const article of publishedArticles) {
+    if (!nodeIds.has(article.artifact.id)) {
+      report(`graph: published article ${article.artifact.id} is missing from nodes.`);
+    }
+  }
+} catch (error) {
+  report(`Generated graph is invalid: ${error.message}`);
+}
+
+try {
+  for (const article of publishedArticles) {
+    const packet = await readJson(path.join(publicRoot, "agents", "articles", `${article.slug}.json`));
+    if ("sourceMarkdownPath" in packet) {
+      report(`${article.year}/${article.slug}: generated packet uses deprecated sourceMarkdownPath.`);
+    }
+    if (packet.sourceRepoPath !== article.sourcePath) {
+      report(`${article.year}/${article.slug}: generated packet sourceRepoPath is incorrect.`);
+    }
+  }
+} catch (error) {
+  report(`Generated article packet is invalid: ${error.message}`);
 }
 
 if (errors.length > 0) {
@@ -173,4 +280,4 @@ if (errors.length > 0) {
   process.exit(1);
 }
 
-console.log(`Validated ${articles.length} article(s), generated agent feeds, and graph artifacts.`);
+console.log(`Validated ${articles.length} source article(s), ${publishedArticles.length} published packet(s), and graph artifacts.`);

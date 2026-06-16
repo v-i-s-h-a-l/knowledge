@@ -41,18 +41,8 @@
   },
   {
     "from": "article:agent-auditable-research",
-    "to": "topic:ai-native-publishing",
-    "type": "topic"
-  },
-  {
-    "from": "article:agent-auditable-research",
     "to": "topic:digital-gardens",
     "type": "covers"
-  },
-  {
-    "from": "article:agent-auditable-research",
-    "to": "topic:digital-gardens",
-    "type": "topic"
   },
   {
     "from": "article:agent-auditable-research",

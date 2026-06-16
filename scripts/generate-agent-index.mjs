@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import {
   loadArticles,
@@ -28,7 +28,8 @@ function articlePacket(article) {
     articleUrl: siteUrl(article.artifact.canonicalPath),
     agentJsonPath: `/agents/articles/${article.slug}.json`,
     agentMarkdownPath: `/agents/articles/${article.slug}.md`,
-    sourceMarkdownPath: `/${article.sourcePath}`,
+    sourceRepoPath: article.sourcePath,
+    sourceGitHubUrl: `https://github.com/v-i-s-h-a-l/knowledge/blob/main/${article.sourcePath}`,
     sectionOutline: Array.from(article.articleBody.matchAll(/<h2 id="([^"]+)">([^<]+)<\/h2>/g)).map(
       (match) => ({
         id: match[1],
@@ -61,7 +62,7 @@ function indexEntry(article) {
 
 function buildGraph(articles) {
   const nodes = new Map();
-  const edges = [];
+  const edges = new Map();
 
   const addNode = (node) => {
     if (!nodes.has(node.id)) {
@@ -70,7 +71,7 @@ function buildGraph(articles) {
   };
 
   const addEdge = (from, to, type) => {
-    edges.push({ from, to, type });
+    edges.set(`${from}:${type}:${to}`, { from, to, type });
   };
 
   for (const article of articles) {
@@ -121,24 +122,33 @@ function buildGraph(articles) {
 
   return {
     nodes: Array.from(nodes.values()).sort((left, right) => left.id.localeCompare(right.id)),
-    edges: edges.sort((left, right) => `${left.from}:${left.to}`.localeCompare(`${right.from}:${right.to}`))
+    edges: Array.from(edges.values()).sort((left, right) =>
+      `${left.from}:${left.type}:${left.to}`.localeCompare(`${right.from}:${right.type}:${right.to}`)
+    )
   };
 }
 
-const articles = await loadArticles();
+const allArticles = await loadArticles();
+const articles = allArticles.filter((article) =>
+  article.articleFrontmatter.status === "published" && article.artifact.status === "published"
+);
 generatedAt = `${articles
   .map((article) => article.artifact.updatedAt)
   .sort()
-  .at(-1)}T00:00:00.000Z`;
+  .at(-1) ?? "1970-01-01"}T00:00:00.000Z`;
+await rm(publicPath("agents"), { recursive: true, force: true });
+await rm(publicPath("graph"), { recursive: true, force: true });
 await mkdir(publicPath("agents", "articles"), { recursive: true });
 await mkdir(publicPath("graph"), { recursive: true });
 
-for (const article of articles) {
+for (const article of allArticles) {
   if (article.artifact.contentHash !== article.contentHash) {
     article.artifact.contentHash = article.contentHash;
     await writeJson(article.artifactPath, article.artifact);
   }
+}
 
+for (const article of articles) {
   await writeJson(publicPath("agents", "articles", `${article.slug}.json`), articlePacket(article));
   await writeFile(publicPath("agents", "articles", `${article.slug}.md`), article.agentRaw);
 }

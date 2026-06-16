@@ -2,6 +2,11 @@
 set -euo pipefail
 
 branch="$(git branch --show-current)"
+identity_hook="${GIT_IDENTITY_HOOK:-"$HOME/.githooks/identity-current"}"
+
+if [[ -x "$identity_hook" ]]; then
+  "$identity_hook"
+fi
 
 if [[ "$branch" == "main" || "$branch" == "master" ]]; then
   echo "Direct commits to $branch are blocked. Use a feature branch/worktree and PR merge." >&2

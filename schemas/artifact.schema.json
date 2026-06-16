@@ -155,7 +155,22 @@
       }
     },
     "related": {
-      "type": "array"
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "id"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]+$"
+          },
+          "id": {
+            "type": "string",
+            "pattern": "^((article|topic):[a-z0-9-]+|claim-[0-9]{3}|source-[a-z0-9-]+)$"
+          }
+        }
+      }
     },
     "agentInstructions": {
       "type": "array",

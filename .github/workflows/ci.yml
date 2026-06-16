@@ -31,3 +31,6 @@ jobs:
 
       - name: Validate content and build site
         run: npm run check
+
+      - name: Verify generated files are committed
+        run: git diff --exit-code -- content public

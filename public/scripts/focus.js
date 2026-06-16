@@ -2,6 +2,7 @@
   const progress = document.querySelector("[data-reading-progress]");
   const railLinks = Array.from(document.querySelectorAll("[data-focus-link]"));
   const markers = Array.from(document.querySelectorAll(".claim-marker[id]"));
+  const articleBody = document.querySelector(".article-body");
 
   const setActive = (id) => {
     railLinks.forEach((link) => {
@@ -37,8 +38,11 @@
 
   const updateProgress = () => {
     if (!progress) return;
-    const scrollable = document.documentElement.scrollHeight - window.innerHeight;
-    const ratio = scrollable <= 0 ? 0 : window.scrollY / scrollable;
+    const target = articleBody || document.documentElement;
+    const rect = target.getBoundingClientRect();
+    const top = rect.top + window.scrollY;
+    const scrollable = Math.max(1, target.scrollHeight - window.innerHeight);
+    const ratio = (window.scrollY - top) / scrollable;
     progress.style.transform = `scaleX(${Math.max(0, Math.min(1, ratio))})`;
   };
 

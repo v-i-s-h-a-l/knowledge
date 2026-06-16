@@ -44,6 +44,10 @@ The better primitive is agent-auditable research: a human-readable essay backed 
 
 <span id="claim-002" class="claim-marker" data-claim="claim-002">Claim C2</span> The bundle should expose a claim graph, evidence ledger, source list, counterpoints, confidence notes, revision history, and agent contribution record. The essay becomes one rendering of that object, not the whole object.
 
+<aside class="audit-example" data-claim="claim-002">
+  <strong>Mini packet:</strong> C2 is a proposal, not a standard. Its evidence is the convergence of agentic publishing research, provenance work, and model-facing discovery files. Its counterpoint is simple: communities may choose different schemas. The human article argues for the shape; the packet records the confidence and limitation.
+</aside>
+
 The reader should be able to move through four layers:
 
 1. The 30-second thesis.
@@ -69,13 +73,9 @@ That is also more educational. A student can study the reasoning, not just the c
 
 <h2 id="the-landscape">The landscape is moving</h2>
 
-This future is not imaginary. Several parts are already visible.
+This future is not imaginary. The pieces are already moving toward each other.
 
-Publishing platforms are becoming more agent-addressable. WordPress has official MCP adapter work that exposes abilities as tools for agents. beehiiv has been moving newsletter operations toward MCP-based workflows. Cloudflare's EmDash is explicitly positioned as a CMS that agents can program and operate.
-
-AI research products are moving from search results toward source-backed synthesis. Tools such as Elicit, Consensus, NotebookLM, Semantic Scholar, and Perplexity-style pages show that readers want answers with sources and summaries, not just links.
-
-Protocol and provenance work is moving in the same direction. The Model Context Protocol gives agents a common way to connect with tools. The llms.txt proposal suggests a compact map that helps language models find the right content. Recent research on agentic publications and agent provenance points toward papers and workflows that are structured for humans and machines.
+Publishing platforms such as WordPress, beehiiv, and Cloudflare's EmDash point toward software that agents can operate. AI research products such as Elicit, Consensus, NotebookLM, Semantic Scholar, and Perplexity-style pages point toward source-backed synthesis. Protocol and provenance work, including MCP, llms.txt, agentic publications, and explicit agent provenance research, points toward content that machines can inspect without scraping a finished essay.
 
 <span id="claim-004" class="claim-marker" data-claim="claim-004">Claim C4</span> These systems solve important pieces, but the missing object is still the combined artifact: a readable essay backed by a portable, auditable research bundle.
 
@@ -87,7 +87,7 @@ Protocol and provenance work is moving in the same direction. The Model Context 
 
 An agent-native publishing workflow should feel ordinary to a human author and precise to a machine.
 
-The researcher starts with questions, sources, notes, and agent conversations. The agent helps explore, challenge, summarize, and draft. The human selects the thesis, rejects weak evidence, writes or edits the final article, and marks uncertainty. The publishing system produces multiple outputs from the same source: web article, Markdown, newsletter version, claim graph, source ledger, JSON packet, and compact model entry file.
+The researcher starts with questions, sources, notes, and agent conversations. The agent helps explore, challenge, summarize, and draft. The human selects the thesis, rejects weak evidence, writes or edits the final article, and marks uncertainty. The publishing system produces multiple outputs from the same source: web article, claim graph, source ledger, JSON packet, and compact model entry file.
 
 <span id="claim-005" class="claim-marker" data-claim="claim-005">Claim C5</span> The author should disclose agent involvement without making the agent the author. The human remains accountable for the thesis, source selection, wording, and conclusions.
 

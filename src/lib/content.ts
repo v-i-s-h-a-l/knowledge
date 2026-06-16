@@ -109,7 +109,7 @@ function toDateString(value: string | Date) {
   return String(value).slice(0, 10);
 }
 
-export function getArticles(): Article[] {
+function loadArticles(): Article[] {
   return Object.entries(articles)
     .map(([path, module]) => {
       const { year, slug, sourceDir } = sourceDirFromPath(path);
@@ -141,6 +141,19 @@ export function getArticles(): Article[] {
       };
     })
     .sort((left, right) => (left.date < right.date ? 1 : -1));
+}
+
+function isPublished(article: Article) {
+  return article.status === "published" && article.artifact.status === "published";
+}
+
+export function getArticles(options: { includeUnpublished?: boolean } = {}): Article[] {
+  const loaded = loadArticles();
+  if (options.includeUnpublished) {
+    return loaded;
+  }
+
+  return loaded.filter(isPublished);
 }
 
 export function getArticleBySlug(slug: string) {

@@ -2,13 +2,10 @@
 set -euo pipefail
 
 root="$(git rev-parse --show-toplevel)"
-hooks_dir="$(git rev-parse --git-path hooks)"
-
-mkdir -p "$hooks_dir"
+git -C "$root" config --local core.hooksPath scripts/hooks
 
 for hook in "$root"/scripts/hooks/*; do
-  name="$(basename "$hook")"
-  cp "$hook" "$hooks_dir/$name"
-  chmod +x "$hooks_dir/$name"
-  echo "installed $name"
+  chmod +x "$hook"
 done
+
+echo "configured repo-local hooksPath=scripts/hooks"

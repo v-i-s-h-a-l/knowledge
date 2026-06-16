@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:
 
 permissions:
   contents: read
@@ -18,6 +17,7 @@ concurrency:
 jobs:
   build:
     name: Build Pages artifact
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -38,6 +38,9 @@ jobs:
       - name: Validate and build
         run: npm run check
 
+      - name: Verify generated files are committed
+        run: git diff --exit-code -- content public
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
@@ -46,6 +49,7 @@ jobs:
   deploy:
     name: Deploy to Pages
     needs: build
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:
       name: github-pages

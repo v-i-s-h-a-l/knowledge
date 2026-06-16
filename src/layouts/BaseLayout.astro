@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import ThemeToggle from "../components/ThemeToggle.astro";
 
 interface Props {
   title?: string;
@@ -46,9 +47,7 @@ const pageTitle = title === "Knowledge Garden" ? title : `${title} | Knowledge G
           <a href={`${base}articles/agent-auditable-research/`}>First Article</a>
           <a href={`${base}graph/`}>Graph</a>
           <a href={`${base}agents/`}>Agents</a>
-          <button class="theme-toggle" type="button" data-theme-toggle aria-label="Toggle color theme">
-            Theme
-          </button>
+          <ThemeToggle />
         </div>
       </nav>
     </header>
@@ -61,17 +60,5 @@ const pageTitle = title === "Knowledge Garden" ? title : `${title} | Knowledge G
         <span>Built for humans first; structured for agents by design.</span>
       </div>
     </footer>
-    <script is:inline>
-      (() => {
-        const button = document.querySelector("[data-theme-toggle]");
-        if (!button) return;
-        button.addEventListener("click", () => {
-          const current = document.documentElement.dataset.theme === "dark" ? "dark" : "light";
-          const next = current === "dark" ? "light" : "dark";
-          document.documentElement.dataset.theme = next;
-          localStorage.setItem("knowledge-theme", next);
-        });
-      })();
-    </script>
   </body>
 </html>

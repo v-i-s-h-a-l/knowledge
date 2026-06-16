@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import FocusRail from "../../components/FocusRail.astro";
 import { getArticles } from "../../lib/content";
 
 export function getStaticPaths() {
@@ -53,20 +54,7 @@ const jsonLd = {
     </header>
 
     <div class="article-layout">
-      <aside class="article-claim-panel" aria-labelledby="claims-title">
-        <p class="eyebrow">Claim rail</p>
-        <h2 id="claims-title">Audit path</h2>
-        <ol>
-          {article.artifact.claims.map((claim) => (
-            <li>
-              <a href={`#${claim.id}`}>
-                <span>{claim.id.replace("claim-", "C")}</span>
-                {claim.claim}
-              </a>
-            </li>
-          ))}
-        </ol>
-      </aside>
+      <FocusRail claims={article.artifact.claims} />
 
       <article class="article-body">
         <Content />
@@ -85,4 +73,5 @@ const jsonLd = {
     </div>
   </div>
   <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+  <script src={`${base}scripts/focus.js`} defer></script>
 </BaseLayout>

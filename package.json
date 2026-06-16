@@ -1,0 +1,20 @@
+{
+  "name": "@v-i-s-h-a-l/knowledge",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "generate": "node -e \"console.log('agent artifacts are generated in the next implementation step')\"",
+    "validate": "node -e \"console.log('content validation is configured in the next implementation step')\""
+  },
+  "overrides": {
+    "esbuild": "0.28.1"
+  },
+  "devDependencies": {
+    "astro": "^6.4.7",
+    "typescript": "^6.0.3"
+  }
+}

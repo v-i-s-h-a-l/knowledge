@@ -10,7 +10,7 @@ import {
 
 const site = "https://v-i-s-h-a-l.github.io";
 const base = "/knowledge";
-const generatedAt = new Date().toISOString();
+let generatedAt = "";
 
 function publicPath(...parts) {
   return path.join(publicRoot, ...parts);
@@ -126,6 +126,10 @@ function buildGraph(articles) {
 }
 
 const articles = await loadArticles();
+generatedAt = `${articles
+  .map((article) => article.artifact.updatedAt)
+  .sort()
+  .at(-1)}T00:00:00.000Z`;
 await mkdir(publicPath("agents", "articles"), { recursive: true });
 await mkdir(publicPath("graph"), { recursive: true });
 

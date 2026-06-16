@@ -199,5 +199,40 @@
     ],
     "notes": "Initial seed article shaped through cross-agent review. Human author retains final judgment before public launch."
   },
-  "contentHash": "9cc02a0fb87411819f4010def605d3a86b58b46f8f3c1e29b34c7107eb9e7edc"
+  "contentHash": "9cc02a0fb87411819f4010def605d3a86b58b46f8f3c1e29b34c7107eb9e7edc",
+  "generatedAt": "2026-06-16T23:31:54.499Z",
+  "articleUrl": "https://v-i-s-h-a-l.github.io/knowledge/articles/agent-auditable-research/",
+  "agentJsonPath": "/agents/articles/agent-auditable-research.json",
+  "agentMarkdownPath": "/agents/articles/agent-auditable-research.md",
+  "sourceMarkdownPath": "/content/articles/2026/agent-auditable-research/article.md",
+  "sectionOutline": [
+    {
+      "id": "the-broken-artifact",
+      "title": "The broken artifact"
+    },
+    {
+      "id": "the-new-object",
+      "title": "The new object"
+    },
+    {
+      "id": "why-research-first",
+      "title": "Why research is the first wedge"
+    },
+    {
+      "id": "the-landscape",
+      "title": "The landscape is moving"
+    },
+    {
+      "id": "what-publishing-looks-like",
+      "title": "What publishing looks like"
+    },
+    {
+      "id": "risks",
+      "title": "Risks"
+    },
+    {
+      "id": "the-first-practical-step",
+      "title": "The first practical step"
+    }
+  ]
 }

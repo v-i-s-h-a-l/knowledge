@@ -1,0 +1,190 @@
+import { mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
+import {
+  loadArticles,
+  publicRoot,
+  rootDir,
+  toPosix,
+  writeJson
+} from "./lib/content-utils.mjs";
+
+const site = "https://v-i-s-h-a-l.github.io";
+const base = "/knowledge";
+const generatedAt = new Date().toISOString();
+
+function publicPath(...parts) {
+  return path.join(publicRoot, ...parts);
+}
+
+function siteUrl(localPath) {
+  return new URL(`${base}${localPath}`, site).toString();
+}
+
+function articlePacket(article) {
+  return {
+    ...article.artifact,
+    contentHash: article.contentHash,
+    generatedAt,
+    articleUrl: siteUrl(article.artifact.canonicalPath),
+    agentJsonPath: `/agents/articles/${article.slug}.json`,
+    agentMarkdownPath: `/agents/articles/${article.slug}.md`,
+    sourceMarkdownPath: `/${article.sourcePath}`,
+    sectionOutline: Array.from(article.articleBody.matchAll(/<h2 id="([^"]+)">([^<]+)<\/h2>/g)).map(
+      (match) => ({
+        id: match[1],
+        title: match[2]
+      })
+    )
+  };
+}
+
+function indexEntry(article) {
+  return {
+    id: article.artifact.id,
+    slug: article.slug,
+    title: article.artifact.title,
+    summary: article.articleFrontmatter.summary,
+    status: article.artifact.status,
+    maturity: article.artifact.maturity,
+    topics: article.artifact.topics,
+    tags: article.articleFrontmatter.tags,
+    canonicalPath: article.artifact.canonicalPath,
+    articleUrl: siteUrl(article.artifact.canonicalPath),
+    agentJsonPath: `/agents/articles/${article.slug}.json`,
+    agentMarkdownPath: `/agents/articles/${article.slug}.md`,
+    updatedAt: article.artifact.updatedAt,
+    claimCount: article.artifact.claims.length,
+    sourceCount: article.artifact.sources.length,
+    contentHash: article.contentHash
+  };
+}
+
+function buildGraph(articles) {
+  const nodes = new Map();
+  const edges = [];
+
+  const addNode = (node) => {
+    if (!nodes.has(node.id)) {
+      nodes.set(node.id, node);
+    }
+  };
+
+  const addEdge = (from, to, type) => {
+    edges.push({ from, to, type });
+  };
+
+  for (const article of articles) {
+    const artifact = article.artifact;
+    addNode({
+      id: artifact.id,
+      type: "article",
+      label: artifact.title,
+      path: artifact.canonicalPath,
+      maturity: artifact.maturity
+    });
+
+    for (const topic of artifact.topics) {
+      const topicId = `topic:${topic}`;
+      addNode({ id: topicId, type: "topic", label: topic });
+      addEdge(artifact.id, topicId, "covers");
+    }
+
+    for (const claim of artifact.claims) {
+      addNode({
+        id: claim.id,
+        type: "claim",
+        label: claim.claim,
+        confidence: claim.confidence,
+        status: claim.status
+      });
+      addEdge(artifact.id, claim.id, "argues");
+
+      for (const sourceId of claim.evidence) {
+        addEdge(claim.id, sourceId, "supported-by");
+      }
+    }
+
+    for (const source of artifact.sources) {
+      addNode({
+        id: source.id,
+        type: "source",
+        label: source.title,
+        url: source.url,
+        sourceType: source.type
+      });
+    }
+
+    for (const relation of artifact.related) {
+      addEdge(artifact.id, relation.id, relation.type);
+    }
+  }
+
+  return {
+    nodes: Array.from(nodes.values()).sort((left, right) => left.id.localeCompare(right.id)),
+    edges: edges.sort((left, right) => `${left.from}:${left.to}`.localeCompare(`${right.from}:${right.to}`))
+  };
+}
+
+const articles = await loadArticles();
+await mkdir(publicPath("agents", "articles"), { recursive: true });
+await mkdir(publicPath("graph"), { recursive: true });
+
+for (const article of articles) {
+  if (article.artifact.contentHash !== article.contentHash) {
+    article.artifact.contentHash = article.contentHash;
+    await writeJson(article.artifactPath, article.artifact);
+  }
+
+  await writeJson(publicPath("agents", "articles", `${article.slug}.json`), articlePacket(article));
+  await writeFile(publicPath("agents", "articles", `${article.slug}.md`), article.agentRaw);
+}
+
+const entries = articles.map(indexEntry);
+await writeJson(publicPath("agents", "index.json"), {
+  schemaVersion: 1,
+  generatedAt,
+  site,
+  base,
+  articles: entries
+});
+
+await writeFile(
+  publicPath("agents", "index.jsonl"),
+  `${entries.map((entry) => JSON.stringify(entry)).join("\n")}\n`
+);
+
+const graph = buildGraph(articles);
+await writeJson(publicPath("graph", "nodes.json"), graph.nodes);
+await writeJson(publicPath("graph", "edges.json"), graph.edges);
+
+const llms = [
+  "# Knowledge Garden",
+  "",
+  "> Focused essays for humans, backed by compact agent-auditable research packets.",
+  "",
+  "## Primary Pages",
+  `- [Home](${siteUrl("/")})`,
+  `- [Agent Entry](${siteUrl("/agents/")})`,
+  `- [Knowledge Graph](${siteUrl("/graph/")})`,
+  "",
+  "## Articles",
+  ...entries.map((entry) => `- [${entry.title}](${entry.articleUrl})`),
+  "",
+  "## Agent Artifacts",
+  `- [Agent Index JSON](${siteUrl("/agents/index.json")})`,
+  `- [Agent Index JSONL](${siteUrl("/agents/index.jsonl")})`,
+  `- [Graph Nodes](${siteUrl("/graph/nodes.json")})`,
+  `- [Graph Edges](${siteUrl("/graph/edges.json")})`,
+  ...entries.flatMap((entry) => [
+    `- [${entry.slug} JSON](${siteUrl(entry.agentJsonPath)})`,
+    `- [${entry.slug} Markdown](${siteUrl(entry.agentMarkdownPath)})`
+  ]),
+  "",
+  "## Use",
+  "Use article packets as the retrieval unit. Treat maturity values as uncertainty markers. Prefer claim IDs and source IDs over inferred citations.",
+  ""
+].join("\n");
+
+await writeFile(publicPath("llms.txt"), llms);
+
+console.log(`Generated ${entries.length} article packet(s), ${graph.nodes.length} graph node(s), and ${graph.edges.length} edge(s).`);

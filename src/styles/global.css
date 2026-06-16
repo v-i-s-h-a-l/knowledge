@@ -557,6 +557,115 @@ h3 {
   font-size: var(--step--1);
 }
 
+.utility-page {
+  padding: clamp(3rem, 7vw, 6rem) 0;
+}
+
+.utility-hero {
+  max-width: 820px;
+  margin-bottom: clamp(2.5rem, 6vw, 4.5rem);
+}
+
+.utility-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.7fr) minmax(0, 1fr);
+  gap: clamp(1.5rem, 5vw, 4rem);
+  border-top: 1px solid var(--border);
+  padding: clamp(2rem, 5vw, 4rem) 0;
+}
+
+.utility-grid p {
+  max-width: var(--measure);
+  color: var(--text-muted);
+}
+
+.artifact-list,
+.packet-list,
+.graph-branch-list {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.artifact-list a {
+  display: block;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  padding: 0.85rem 1rem;
+  color: var(--text);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: var(--step--1);
+  text-decoration: none;
+}
+
+.artifact-list a:hover,
+.artifact-list a:focus-visible {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.packet-item,
+.graph-stem,
+.graph-branch {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  padding: 1rem;
+}
+
+.packet-item p,
+.graph-branch p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--step--1);
+}
+
+.packet-item h3,
+.graph-branch h3 {
+  margin: 0.3rem 0 0.7rem;
+  font-family: inherit;
+  font-size: var(--step-1);
+  line-height: 1.25;
+}
+
+.graph-stems {
+  display: grid;
+  gap: 1rem;
+}
+
+.graph-stem {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.32fr) minmax(0, 1fr);
+  gap: clamp(1rem, 4vw, 3rem);
+}
+
+.graph-stem h2 {
+  font-family: inherit;
+  font-size: var(--step-2);
+  text-transform: capitalize;
+}
+
+.graph-branch ol {
+  display: grid;
+  gap: 0.5rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.graph-branch li {
+  display: grid;
+  grid-template-columns: 2.4rem 1fr;
+  gap: 0.5rem;
+  color: var(--text-muted);
+  font-size: var(--step--1);
+}
+
+.graph-branch li span {
+  color: var(--accent-strong);
+  font-weight: 780;
+}
+
 .site-footer {
   border-top: 1px solid var(--border);
   color: var(--text-soft);
@@ -586,7 +695,9 @@ h3 {
 
   .home-hero,
   .section-grid,
-  .article-layout {
+  .article-layout,
+  .utility-grid,
+  .graph-stem {
     grid-template-columns: 1fr;
   }
 

@@ -1,0 +1,88 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getArticles } from "../../lib/content";
+
+export function getStaticPaths() {
+  return getArticles().map((article) => ({
+    params: { slug: article.slug },
+    props: { article }
+  }));
+}
+
+const { article } = Astro.props;
+const Content = article.Content;
+const base = import.meta.env.BASE_URL;
+const canonicalUrl = new URL(
+  `${base}${article.canonicalPath.replace(/^\/+/, "")}`,
+  Astro.site ?? "https://v-i-s-h-a-l.github.io"
+).toString();
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: article.title,
+  description: article.summary,
+  datePublished: article.date,
+  dateModified: article.updated,
+  author: {
+    "@type": "Person",
+    name: "Vishal Singh"
+  },
+  mainEntityOfPage: canonicalUrl
+};
+---
+
+<BaseLayout title={article.title} description={article.summary} bodyClass="article-page">
+  <div class="page-shell article-shell">
+    <header class="article-hero" aria-labelledby="article-title">
+      <p class="eyebrow">{article.topic.replaceAll("-", " ")}</p>
+      <h1 id="article-title">{article.title}</h1>
+      <p class="lede">{article.dek}</p>
+      <div class="article-meta" aria-label="Article metadata">
+        <span>{article.date}</span>
+        <span>{article.readingTime}</span>
+        <span>{article.maturity}</span>
+      </div>
+      <div class="button-row">
+        <a class="button primary" href={`${base}agents/articles/${article.slug}.json`}>
+          Agent JSON
+        </a>
+        <a class="button" href={`${base}agents/articles/${article.slug}.md`}>
+          Agent brief
+        </a>
+      </div>
+    </header>
+
+    <div class="article-layout">
+      <aside class="article-claim-panel" aria-labelledby="claims-title">
+        <p class="eyebrow">Claim rail</p>
+        <h2 id="claims-title">Audit path</h2>
+        <ol>
+          {article.artifact.claims.map((claim) => (
+            <li>
+              <a href={`#${claim.id}`}>
+                <span>{claim.id.replace("claim-", "C")}</span>
+                {claim.claim}
+              </a>
+            </li>
+          ))}
+        </ol>
+      </aside>
+
+      <article class="article-body">
+        <Content />
+        <section class="source-ledger" aria-labelledby="sources-title">
+          <h2 id="sources-title">Source Ledger</h2>
+          <ul>
+            {article.artifact.sources.map((source) => (
+              <li>
+                <a href={source.url}>{source.title}</a>
+                <span>{source.type}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </article>
+    </div>
+  </div>
+  <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+</BaseLayout>

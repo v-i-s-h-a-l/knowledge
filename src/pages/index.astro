@@ -1,7 +1,10 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import { getArticles } from "../lib/content";
 
 const base = import.meta.env.BASE_URL;
+const articles = getArticles();
+const latest = articles[0];
 ---
 
 <BaseLayout
@@ -18,7 +21,7 @@ const base = import.meta.env.BASE_URL;
           evidence ledger, source trail, revision history, and compact agent brief.
         </p>
         <div class="button-row" aria-label="Primary actions">
-          <a class="button primary" href={`${base}articles/agent-auditable-research/`}>
+          <a class="button primary" href={`${base}articles/${latest.slug}/`}>
             Read the first article
           </a>
           <a class="button" href={`${base}agents/`}>Open agent entry</a>
@@ -64,6 +67,24 @@ const base = import.meta.env.BASE_URL;
           <li>Agents get structured metadata, claim IDs, source IDs, and compact index files.</li>
           <li>Future posts inherit the same validation, graph, and publication workflow.</li>
         </ul>
+      </div>
+    </section>
+
+    <section class="section-band section-grid" aria-labelledby="latest-title">
+      <div>
+        <p class="eyebrow">Latest path</p>
+        <h2 id="latest-title">Start with the source object.</h2>
+      </div>
+      <div class="article-list">
+        {articles.map((article) => (
+          <article class="article-teaser">
+            <p>{article.maturity} / {article.topic.replaceAll("-", " ")}</p>
+            <h3>
+              <a href={`${base}articles/${article.slug}/`}>{article.title}</a>
+            </h3>
+            <span>{article.summary}</span>
+          </article>
+        ))}
       </div>
     </section>
   </div>

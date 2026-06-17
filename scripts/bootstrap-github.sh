@@ -5,7 +5,7 @@ OWNER="${OWNER:-v-i-s-h-a-l}"
 REPO="${REPO:-knowledge}"
 FEATURE_BRANCH="${FEATURE_BRANCH:-feature/knowledge-garden-foundation}"
 DEFAULT_BRANCH="${DEFAULT_BRANCH:-main}"
-REMOTE_URL="git@github.com:${OWNER}/${REPO}.git"
+REMOTE_URL="${REMOTE_URL:-https://github.com/${OWNER}/${REPO}.git}"
 FULL_NAME="${OWNER}/${REPO}"
 
 if ! command -v gh >/dev/null 2>&1; then

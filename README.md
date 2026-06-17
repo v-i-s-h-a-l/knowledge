@@ -74,3 +74,13 @@ Once the repository exists on GitHub:
 5. Merge through the PR after checks pass.
 
 The site is configured for `https://v-i-s-h-a-l.github.io/knowledge/`.
+
+If `gh` is authenticated, the repo bootstrap can be automated:
+
+```bash
+./scripts/bootstrap-github.sh
+```
+
+The script creates `v-i-s-h-a-l/knowledge` as a public repository if it is missing,
+sets `origin`, pushes `main` and `feature/knowledge-garden-foundation`, and opens a
+draft pull request.

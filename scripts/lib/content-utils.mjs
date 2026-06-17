@@ -5,6 +5,7 @@ import yaml from "js-yaml";
 
 export const rootDir = process.cwd();
 export const contentRoot = path.join(rootDir, "content", "articles");
+export const roadmapRoot = path.join(rootDir, "content", "roadmap");
 export const publicRoot = path.join(rootDir, "public");
 
 export function toPosix(filePath) {
@@ -113,4 +114,34 @@ export async function loadArticle(articleDir) {
 export async function loadArticles() {
   const dirs = await findArticleDirs();
   return Promise.all(dirs.map((dir) => loadArticle(dir)));
+}
+
+export async function findRoadmapFiles() {
+  try {
+    const entries = await readdir(roadmapRoot, { withFileTypes: true });
+    return entries
+      .filter((entry) => entry.isFile() && entry.name.endsWith(".json"))
+      .map((entry) => path.join(roadmapRoot, entry.name))
+      .sort();
+  } catch (error) {
+    if (error.code === "ENOENT") {
+      return [];
+    }
+
+    throw error;
+  }
+}
+
+export async function loadRoadmaps() {
+  const files = await findRoadmapFiles();
+  return Promise.all(
+    files.map(async (filePath) => {
+      const data = await readJson(filePath);
+      return {
+        ...data,
+        sourcePath: toPosix(path.relative(rootDir, filePath)),
+        filePath
+      };
+    })
+  );
 }

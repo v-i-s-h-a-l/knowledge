@@ -2,6 +2,7 @@ import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import {
   loadArticles,
+  loadRoadmaps,
   publicRoot,
   rootDir,
   toPosix,
@@ -132,13 +133,17 @@ const allArticles = await loadArticles();
 const articles = allArticles.filter((article) =>
   article.articleFrontmatter.status === "published" && article.artifact.status === "published"
 );
+const allRoadmaps = await loadRoadmaps();
+const roadmaps = allRoadmaps.filter((roadmap) => roadmap.status === "published");
 generatedAt = `${articles
   .map((article) => article.artifact.updatedAt)
+  .concat(roadmaps.map((roadmap) => roadmap.updatedAt))
   .sort()
   .at(-1) ?? "1970-01-01"}T00:00:00.000Z`;
 await rm(publicPath("agents"), { recursive: true, force: true });
 await rm(publicPath("graph"), { recursive: true, force: true });
 await mkdir(publicPath("agents", "articles"), { recursive: true });
+await mkdir(publicPath("agents", "roadmap"), { recursive: true });
 await mkdir(publicPath("graph"), { recursive: true });
 
 for (const article of allArticles) {
@@ -153,13 +158,39 @@ for (const article of articles) {
   await writeFile(publicPath("agents", "articles", `${article.slug}.md`), article.agentRaw);
 }
 
+for (const roadmap of roadmaps) {
+  const packet = {
+    ...roadmap,
+    generatedAt,
+    pageUrl: siteUrl(`/roadmap/`),
+    agentJsonPath: `/agents/roadmap/${roadmap.slug}.json`,
+    sourceRepoPath: roadmap.sourcePath,
+    sourceGitHubUrl: `https://github.com/v-i-s-h-a-l/knowledge/blob/main/${roadmap.sourcePath}`
+  };
+  delete packet.filePath;
+  delete packet.sourcePath;
+  await writeJson(publicPath("agents", "roadmap", `${roadmap.slug}.json`), packet);
+}
+
 const entries = articles.map(indexEntry);
 await writeJson(publicPath("agents", "index.json"), {
   schemaVersion: 1,
   generatedAt,
   site,
   base,
-  articles: entries
+  articles: entries,
+  roadmaps: roadmaps.map((roadmap) => ({
+    id: roadmap.id,
+    slug: roadmap.slug,
+    title: roadmap.title,
+    summary: roadmap.summary,
+    status: roadmap.status,
+    updatedAt: roadmap.updatedAt,
+    priorityCounts: roadmap.priorityCounts,
+    pageUrl: siteUrl("/roadmap/"),
+    agentJsonPath: `/agents/roadmap/${roadmap.slug}.json`,
+    sourceRepoPath: roadmap.sourcePath
+  }))
 });
 
 await writeFile(
@@ -178,6 +209,7 @@ const llms = [
   "",
   "## Primary Pages",
   `- [Home](${siteUrl("/")})`,
+  `- [Roadmap](${siteUrl("/roadmap/")})`,
   `- [Agent Entry](${siteUrl("/agents/")})`,
   `- [Knowledge Graph](${siteUrl("/graph/")})`,
   "",
@@ -189,6 +221,7 @@ const llms = [
   `- [Agent Index JSONL](${siteUrl("/agents/index.jsonl")})`,
   `- [Graph Nodes](${siteUrl("/graph/nodes.json")})`,
   `- [Graph Edges](${siteUrl("/graph/edges.json")})`,
+  ...roadmaps.map((roadmap) => `- [${roadmap.slug} roadmap JSON](${siteUrl(`/agents/roadmap/${roadmap.slug}.json`)})`),
   ...entries.flatMap((entry) => [
     `- [${entry.slug} JSON](${siteUrl(entry.agentJsonPath)})`,
     `- [${entry.slug} Markdown](${siteUrl(entry.agentMarkdownPath)})`
@@ -201,4 +234,4 @@ const llms = [
 
 await writeFile(publicPath("llms.txt"), llms);
 
-console.log(`Generated ${entries.length} article packet(s), ${graph.nodes.length} graph node(s), and ${graph.edges.length} edge(s).`);
+console.log(`Generated ${entries.length} article packet(s), ${roadmaps.length} roadmap packet(s), ${graph.nodes.length} graph node(s), and ${graph.edges.length} edge(s).`);

@@ -12,10 +12,14 @@ content/articles/<year>/<slug>/
   agent.md            # compact agent brief
   artifact.json       # claims, sources, relations, review state, hash
 
+content/roadmap/
+  *.json              # schema-validated public roadmap artifacts
+
 public/
   agents/index.json   # generated discovery index
   agents/index.jsonl  # generated compact feed
   agents/articles/    # generated per-article packets
+  agents/roadmap/     # generated roadmap packets
   graph/              # generated graph nodes/edges
   llms.txt            # generated LLM entry map
 

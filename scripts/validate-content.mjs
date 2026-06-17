@@ -3,6 +3,7 @@ import path from "node:path";
 import Ajv2020 from "ajv/dist/2020.js";
 import {
   loadArticles,
+  loadRoadmaps,
   publicRoot,
   readJson,
   rootDir,
@@ -25,9 +26,11 @@ ajv.addFormat("uri", {
 const articleSchema = await readJson(path.join(rootDir, "schemas", "article.schema.json"));
 const agentSchema = await readJson(path.join(rootDir, "schemas", "agent.schema.json"));
 const artifactSchema = await readJson(path.join(rootDir, "schemas", "artifact.schema.json"));
+const roadmapSchema = await readJson(path.join(rootDir, "schemas", "roadmap.schema.json"));
 const validateArticle = ajv.compile(articleSchema);
 const validateAgent = ajv.compile(agentSchema);
 const validateArtifact = ajv.compile(artifactSchema);
+const validateRoadmap = ajv.compile(roadmapSchema);
 const errors = [];
 
 function report(message) {
@@ -69,9 +72,11 @@ function reportDuplicates(prefix, label, values) {
 }
 
 const articles = await loadArticles();
+const roadmaps = await loadRoadmaps();
 const publishedArticles = articles.filter((article) =>
   article.articleFrontmatter.status === "published" && article.artifact.status === "published"
 );
+const publishedRoadmaps = roadmaps.filter((roadmap) => roadmap.status === "published");
 const knownIds = new Set();
 
 for (const article of articles) {
@@ -84,6 +89,54 @@ for (const article of articles) {
   }
   for (const source of article.artifact.sources) {
     knownIds.add(source.id);
+  }
+}
+
+for (const roadmap of roadmaps) {
+  const prefix = `roadmap/${roadmap.slug}`;
+  const { filePath: _filePath, sourcePath: _sourcePath, ...roadmapForSchema } = roadmap;
+
+  if (!validateRoadmap(roadmapForSchema)) {
+    formatAjvErrors(`${prefix} roadmap`, validateRoadmap);
+  }
+
+  if (roadmap.id !== `roadmap:${roadmap.slug}`) {
+    report(`${prefix}: id must be roadmap:${roadmap.slug}.`);
+  }
+
+  const ideaIds = roadmap.ideas?.map((idea) => idea.id) ?? [];
+  reportDuplicates(prefix, "idea id", ideaIds);
+  const knownIdeaIds = new Set(ideaIds);
+
+  const priorityCounts = { P0: 0, P1: 0, P2: 0 };
+  for (const idea of roadmap.ideas ?? []) {
+    if (idea.priority in priorityCounts) {
+      priorityCounts[idea.priority] += 1;
+    }
+
+    for (const sourcePath of idea.sourcePaths ?? []) {
+      if (!sourcePath.endsWith("README.md") && !sourcePath.endsWith("SKILL.md") && !sourcePath.endsWith(".py")) {
+        report(`${prefix}: ${idea.id} has a source path that is not a README, skill, or code reference: ${sourcePath}.`);
+      }
+    }
+  }
+
+  for (const [priority, count] of Object.entries(priorityCounts)) {
+    if (roadmap.priorityCounts?.[priority] !== count) {
+      report(`${prefix}: priorityCounts.${priority} is ${roadmap.priorityCounts?.[priority]}; expected ${count}.`);
+    }
+  }
+
+  for (const phase of roadmap.phases ?? []) {
+    for (const ideaId of phase.ideaIds ?? []) {
+      if (!knownIdeaIds.has(ideaId)) {
+        report(`${prefix}: ${phase.id} references unknown idea ${ideaId}.`);
+      }
+    }
+  }
+
+  if (roadmap.status === "published") {
+    await assertExists(path.join(publicRoot, "agents", "roadmap", `${roadmap.slug}.json`));
   }
 }
 
@@ -215,9 +268,19 @@ try {
     report(`Agent index has ${index.articles?.length ?? 0} article(s); expected ${publishedArticles.length}.`);
   }
 
+  if (index.roadmaps?.length !== publishedRoadmaps.length) {
+    report(`Agent index has ${index.roadmaps?.length ?? 0} roadmap(s); expected ${publishedRoadmaps.length}.`);
+  }
+
   for (const entry of index.articles ?? []) {
     if (entry.status !== "published") {
       report(`Agent index includes non-published article ${entry.slug}.`);
+    }
+  }
+
+  for (const entry of index.roadmaps ?? []) {
+    if (entry.status !== "published") {
+      report(`Agent index includes non-published roadmap ${entry.slug}.`);
     }
   }
 
@@ -272,6 +335,23 @@ try {
   report(`Generated article packet is invalid: ${error.message}`);
 }
 
+try {
+  for (const roadmap of publishedRoadmaps) {
+    const packet = await readJson(path.join(publicRoot, "agents", "roadmap", `${roadmap.slug}.json`));
+    if ("filePath" in packet || "sourcePath" in packet) {
+      report(`roadmap/${roadmap.slug}: generated packet exposes internal loader paths.`);
+    }
+    if (packet.sourceRepoPath !== roadmap.sourcePath) {
+      report(`roadmap/${roadmap.slug}: generated packet sourceRepoPath is incorrect.`);
+    }
+    if (packet.ideas?.length !== roadmap.ideas.length) {
+      report(`roadmap/${roadmap.slug}: generated packet idea count is incorrect.`);
+    }
+  }
+} catch (error) {
+  report(`Generated roadmap packet is invalid: ${error.message}`);
+}
+
 if (errors.length > 0) {
   console.error("Content validation failed:");
   for (const error of errors) {
@@ -280,4 +360,4 @@ if (errors.length > 0) {
   process.exit(1);
 }
 
-console.log(`Validated ${articles.length} source article(s), ${publishedArticles.length} published packet(s), and graph artifacts.`);
+console.log(`Validated ${articles.length} source article(s), ${publishedArticles.length} published article packet(s), ${publishedRoadmaps.length} published roadmap packet(s), and graph artifacts.`);

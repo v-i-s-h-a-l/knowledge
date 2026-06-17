@@ -24,6 +24,7 @@ const latest = articles[0];
           <a class="button primary" href={`${base}articles/${latest.slug}/`}>
             Read the first article
           </a>
+          <a class="button" href={`${base}roadmap/`}>View roadmap</a>
           <a class="button" href={`${base}agents/`}>Open agent entry</a>
           <a class="button" href={`${base}graph/`}>Browse the graph</a>
         </div>
@@ -45,7 +46,7 @@ const latest = articles[0];
         <div class="stem-node">
           <div>
             <strong>Next branches</strong>
-            <span>Claim graphs, source ledgers, personal research workflows, and agent feeds.</span>
+            <span>Evidence packets, source-ledger scouts, author workspaces, and compact agent feeds.</span>
           </div>
         </div>
       </aside>
@@ -85,6 +86,21 @@ const latest = articles[0];
             <span>{article.summary}</span>
           </article>
         ))}
+      </div>
+    </section>
+
+    <section class="section-band section-grid" aria-labelledby="roadmap-title">
+      <div>
+        <p class="eyebrow">Future path</p>
+        <h2 id="roadmap-title">The roadmap starts with evidence, not runtime chat.</h2>
+      </div>
+      <div>
+        <p>
+          A review of runnable LLM app patterns points to a practical sequence: stronger claim
+          packets, evidence diagnostics, author workspaces, source intake, and then agent-native
+          inspectors once the artifact contract is stable.
+        </p>
+        <a class="packet-link" href={`${base}roadmap/`}>Open the roadmap</a>
       </div>
     </section>
   </div>

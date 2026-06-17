@@ -4,6 +4,7 @@
 
 ## Primary Pages
 - [Home](https://v-i-s-h-a-l.github.io/knowledge/)
+- [Roadmap](https://v-i-s-h-a-l.github.io/knowledge/roadmap/)
 - [Agent Entry](https://v-i-s-h-a-l.github.io/knowledge/agents/)
 - [Knowledge Graph](https://v-i-s-h-a-l.github.io/knowledge/graph/)
 
@@ -15,6 +16,7 @@
 - [Agent Index JSONL](https://v-i-s-h-a-l.github.io/knowledge/agents/index.jsonl)
 - [Graph Nodes](https://v-i-s-h-a-l.github.io/knowledge/graph/nodes.json)
 - [Graph Edges](https://v-i-s-h-a-l.github.io/knowledge/graph/edges.json)
+- [awesome-llm-apps-roadmap roadmap JSON](https://v-i-s-h-a-l.github.io/knowledge/agents/roadmap/awesome-llm-apps-roadmap.json)
 - [agent-auditable-research JSON](https://v-i-s-h-a-l.github.io/knowledge/agents/articles/agent-auditable-research.json)
 - [agent-auditable-research Markdown](https://v-i-s-h-a-l.github.io/knowledge/agents/articles/agent-auditable-research.md)
 

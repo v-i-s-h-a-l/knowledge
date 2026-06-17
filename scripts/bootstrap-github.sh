@@ -19,6 +19,8 @@ if ! gh auth status >/dev/null 2>&1; then
   exit 1
 fi
 
+gh auth setup-git >/dev/null
+
 repo_root="$(git rev-parse --show-toplevel)"
 cd "$repo_root"
 
